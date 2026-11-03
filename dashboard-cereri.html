@@ -51,6 +51,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.3);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--accent-ink)}
@@ -258,6 +259,7 @@ td.t-exp{min-width:130px;max-width:190px}
         </select>
       </label>
       <button class="btn" id="btnFile" type="button" title="Încarcă un fișier CSV descărcat de pe link"><svg><use href="#i-upload"/></svg>Încarcă CSV</button>
+      <a class="btn" id="btnLogout" href="/logout" hidden title="Ieși din cont pe acest dispozitiv">Ieșire</a>
       <button class="btn primary" id="btnRestart" type="button" title="Reîncarcă datele actualizate de pe link"><svg class="spin"><use href="#i-refresh"/></svg><span>Restart</span></button>
       <input type="file" id="fileInput" accept=".csv,text/csv" hidden>
     </div>
@@ -305,15 +307,16 @@ td.t-exp{min-width:130px;max-width:190px}
   </section>
 
   <footer class="foot">
-    <details>
+    <details id="srcBox">
       <summary>Sursa datelor</summary>
       <div class="src">
-        <input class="ctl" id="srcUrl" type="url" aria-label="Link export CSV">
+        <input class="ctl" id="srcUrl" type="url" placeholder="https://oformo.com/api/export?…&amp;token=…" aria-label="Link export CSV oformo">
         <button class="btn sm" id="btnSrcSave" type="button">Salvează și reîncarcă</button>
-        <button class="btn sm" id="btnSrcReset" type="button">Link-ul inițial</button>
+        <button class="btn sm" id="btnSrcReset" type="button">Șterge link-ul</button>
       </div>
-      <p>Link-ul conține un token de acces — nu publica acest fișier și nu-l trimite persoanelor care nu trebuie să vadă datele. Ultimele date încărcate se păstrează în acest browser, ca dashboard-ul să funcționeze și fără internet.</p>
+      <p>Link-ul de export conține un token de acces. Se păstrează doar în acest browser — nu-l pune în fișiere publice sau pe GitHub. Ultimele date încărcate rămân în browser, ca dashboard-ul să funcționeze și fără internet.</p>
     </details>
+    <p id="serverNote" hidden>Datele vin prin serverul securizat. Link-ul de export cu token-ul este păstrat doar pe server, ca secret.</p>
   </footer>
 </div>
 
@@ -323,13 +326,18 @@ td.t-exp{min-width:130px;max-width:190px}
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="drop">Eliberează fișierul CSV pentru a-l încărca în dashboard</div>
 
+<!--SERVER_CONFIG-->
 <script>
 (function(){
 'use strict';
 
 /* ---------- Configurare ---------- */
-const VIA_LOCAL = /^https?:$/.test(location.protocol) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-const DEFAULT_URL ='https://oformo.com/api/export?form=jzubl27erlfoza2i&format=csv&system=status%2Cid%2Clink%2Cvisible%2Creviews%2Csource%2Cparent&download=1&token=2fodj4b72ux9auhsrmm0l5x17ipm2w57';
+// Mod server (Cloudflare Worker): serverul injectează window.DASHBOARD_SERVER și păstrează link-ul cu token ca secret.
+const SERVER = (window.DASHBOARD_SERVER && typeof window.DASHBOARD_SERVER.dataPath === 'string') ? window.DASHBOARD_SERVER : null;
+// Mod local („Porneste dashboard.bat”): serverul PowerShell de pe localhost descarcă CSV-ul în locul browserului.
+const VIA_LOCAL = !SERVER && /^https?:$/.test(location.protocol) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+// Nu scrie token-ul în acest fișier: link-ul se introduce în „Sursa datelor” și rămâne doar în browser.
+const DEFAULT_URL = '';
 const LS = { url:'oformoDash.url', csv:'oformoDash.csv', csvTs:'oformoDash.csvTs', snap:'oformoDash.snapshot', auto:'oformoDash.auto' };
 const store = {
   get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
@@ -508,7 +516,12 @@ async function refresh(){
   busy = true; setBusy(true);
   try {
     let res;
-    if (VIA_LOCAL){
+    if (SERVER){
+      res = await fetch(SERVER.dataPath, { cache:'no-store', credentials:'same-origin' });
+      if (res.status === 401){ location.href = SERVER.loginPath || '/'; return; }   // sesiunea a expirat
+    } else if (!dataUrl){
+      showNeedUrl(); return;
+    } else if (VIA_LOCAL){
       // Deschis prin „Porneste dashboard.bat”: serverul local descarcă CSV-ul în locul browserului (fără CORS).
       try { res = await fetch('/data.csv?url=' + encodeURIComponent(dataUrl), { cache:'no-store' }); }
       catch(e){ const err = new Error('local'); err.local = true; throw err; }
@@ -523,7 +536,7 @@ async function refresh(){
     }
     const text = await res.text();
     ingest(text, 'live');
-    store.set(LS.csv, text); store.set(LS.csvTs, String(Date.now()));
+    cacheCSV(text);
     lastFailed = false;
     hideBanner();
     let msg = `Date actualizate · ${fmt(R.length)} cereri`;
@@ -548,18 +561,31 @@ function showError(err){
   lastFailed = true;
   const network = err instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(err.message||'');
   let p;
-  if (err.local) p = 'Serverul local nu răspunde — probabil fereastra „Porneste dashboard” a fost închisă. Pornește din nou <b>Porneste dashboard.bat</b> și apasă Restart.';
+  if (SERVER) p = network ? 'Nu am primit răspuns de la server. Verifică conexiunea la internet.' : esc(err.message);
+  else if (err.local) p = 'Serverul local nu răspunde — probabil fereastra „Porneste dashboard” a fost închisă. Pornește din nou <b>Porneste dashboard.bat</b> și apasă Restart.';
   else if (network && !VIA_LOCAL) p = 'Browserul nu permite unei pagini deschise direct ca fișier să citească datele de pe oformo.com (restricția CORS a site-ului). <b>Soluția:</b> închide această pagină și pornește dashboard-ul cu <b>Porneste dashboard.bat</b> din același folder — atunci Restart aduce datele automat.';
   else if (network) p = 'Nu am primit răspuns de la oformo.com. Verifică conexiunea la internet.';
   else if (err.http === 401 || err.http === 403) p = esc(err.message) + '. Token-ul din link poate fi expirat sau revocat — pune link-ul nou în „Sursa datelor” (jos de tot).';
   else p = esc(err.message);
   p += R.length ? ` Se afișează ultimele date disponibile (${esc(fmtDT(loadedAt))}).` : '';
-  p += ' Variantă manuală: descarcă CSV-ul de pe link și încarcă-l aici (sau trage fișierul peste pagină).';
-  showBanner('error', 'Nu am putut încărca datele de pe link', p, [
-    `<button class="btn sm primary" type="button" data-act="retry"><svg><use href="#i-refresh"/></svg>Încearcă din nou</button>`,
-    `<a class="btn sm" href="${esc(dataUrl)}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-download"/></svg>Descarcă CSV de pe link</a>`,
-    `<button class="btn sm" type="button" data-act="file"><svg><use href="#i-upload"/></svg>Încarcă fișierul descărcat</button>`
-  ]);
+  if (!SERVER) p += ' Variantă manuală: descarcă CSV-ul de pe link și încarcă-l aici (sau trage fișierul peste pagină).';
+  const acts = [`<button class="btn sm primary" type="button" data-act="retry"><svg><use href="#i-refresh"/></svg>Încearcă din nou</button>`];
+  if (!SERVER && safeUrl(dataUrl)) acts.push(`<a class="btn sm" href="${esc(dataUrl)}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-download"/></svg>Descarcă CSV de pe link</a>`);
+  if (!SERVER) acts.push(`<button class="btn sm" type="button" data-act="file"><svg><use href="#i-upload"/></svg>Încarcă fișierul descărcat</button>`);
+  showBanner('error', 'Nu am putut încărca datele', p, acts);
+}
+
+function showNeedUrl(){
+  showBanner('info', 'Adaugă link-ul de export oformo',
+    'Lipește link-ul de export CSV (cel cu <b>token=</b>) în „Sursa datelor”, jos în pagină. Se păstrează doar în acest browser, nu în fișier. Sau încarcă direct un fișier CSV descărcat.',
+    [`<button class="btn sm primary" type="button" data-act="src">Deschide „Sursa datelor”</button>`,
+     `<button class="btn sm" type="button" data-act="file"><svg><use href="#i-upload"/></svg>Încarcă fișier CSV</button>`]);
+}
+
+// În modul server nu păstrăm datele (cu date personale) în browser; păstrăm doar instantaneul ID → status pentru „noi / modificate”.
+function cacheCSV(text){
+  if (SERVER) return;
+  store.set(LS.csv, text); store.set(LS.csvTs, String(Date.now()));
 }
 
 function showBanner(kind, title, html, actions){
@@ -583,7 +609,7 @@ async function loadFile(file){
     fileName = file.name;
     ingest(text, 'file');
     lastFailed = false; renderMeta();
-    store.set(LS.csv, text); store.set(LS.csvTs, String(Date.now()));
+    cacheCSV(text);
     hideBanner();
     toast(`Fișier încărcat · ${fmt(R.length)} cereri`);
   } catch(err) {
@@ -612,7 +638,7 @@ function renderMeta(){
   const dot = $('#liveDot');
   dot.className = 'live-dot' + (loadedFrom === 'live' && !lastFailed ? ' live' : loadedFrom ? ' cache' : '');
   if (!loadedAt){ $('#metaText').textContent = busy ? 'Se încarcă datele de pe link…' : 'Nu sunt date încărcate'; return; }
-  const src = loadedFrom === 'live' ? 'direct de pe link' : loadedFrom === 'file' ? `din fișierul „${fileName}”` : 'din memoria browserului (ultima încărcare)';
+  const src = loadedFrom === 'live' ? (SERVER ? 'actualizate prin server' : 'direct de pe link') : loadedFrom === 'file' ? `din fișierul „${fileName}”` : 'din memoria browserului (ultima încărcare)';
   $('#metaText').textContent = `Date din ${fmtDT(loadedAt)} · ${src} · ${fmt(R.length)} cereri` + (lastFailed ? ' · ultima actualizare a eșuat' : '');
 }
 
@@ -888,6 +914,7 @@ document.addEventListener('click', e => {
     const a = act.dataset.act;
     if (a === 'retry') refresh();
     else if (a === 'file') $('#fileInput').click();
+    else if (a === 'src'){ const d = $('#srcBox'); d.open = true; d.scrollIntoView({ behavior:'smooth', block:'center' }); setTimeout(() => $('#srcUrl').focus(), 300); }
     else if (a === 'close') closeDrawer();
     else if (a === 'reset') resetFilters();
     else if (a === 'onlychg'){ st.onlyChg = !st.onlyChg; renderAll(); }
@@ -930,7 +957,7 @@ $('#btnSrcSave').addEventListener('click', () => {
   if (!/^https:\/\//i.test(v)){ toast('Introdu un link valid care începe cu https://'); return; }
   dataUrl = v; store.set(LS.url, v); refresh();
 });
-$('#btnSrcReset').addEventListener('click', () => { dataUrl = DEFAULT_URL; store.del(LS.url); $('#srcUrl').value = dataUrl; refresh(); });
+$('#btnSrcReset').addEventListener('click', () => { dataUrl = DEFAULT_URL; store.del(LS.url); $('#srcUrl').value = dataUrl; toast('Link-ul a fost șters din acest browser'); });
 
 // Tooltip
 const tip = $('#tip');
@@ -961,8 +988,15 @@ addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); dr
 const savedAuto = store.get(LS.auto);
 if (savedAuto && [...$('#auto').options].some(o => o.value === savedAuto)) $('#auto').value = savedAuto;
 setupAuto();
-const cached = store.get(LS.csv);
-if (cached){ try { ingest(cached, 'cache', +store.get(LS.csvTs) || null); } catch(e){ store.del(LS.csv); } }
+if (SERVER){
+  $('#srcBox').hidden = true; $('#serverNote').hidden = false; $('#btnLogout').hidden = false;
+  if (SERVER.logoutPath) $('#btnLogout').href = SERVER.logoutPath;
+  $('#btnFile').hidden = true;
+  store.del(LS.csv); store.del(LS.csvTs);
+} else {
+  const cached = store.get(LS.csv);
+  if (cached){ try { ingest(cached, 'cache', +store.get(LS.csvTs) || null); } catch(e){ store.del(LS.csv); } }
+}
 renderAll();
 refresh();
 })();
