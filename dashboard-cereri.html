@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cereri de suport — Dashboard</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f4f3f0; --surface:#fcfcfb; --surface-2:#f0efec; --hover:rgba(11,11,11,.035);
+  --border:#e4e3de; --border-strong:#cfcec8;
+  --text:#0b0b0b; --text-2:#52514e; --text-3:#76756f;
+  --accent:#2a78d6; --accent-ink:#1c5cab; --accent-soft:#e6f0fc;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --neutral:#a3a29c; --bar:#2a78d6;
+  --err-bg:#fdeeee; --err-border:#f1c4c4; --err-ink:#a32626;
+  --info-bg:#eef4fc; --info-border:#c9dcf5;
+  --warn-soft:#fff2d4; --warn-ink:#7a5000;
+  --tip-bg:#1d1d1c; --tip-text:#f6f5f2;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.035);
+  --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232322; --hover:rgba(255,255,255,.045);
+    --border:#2c2c2a; --border-strong:#3e3e3b;
+    --text:#f0efec; --text-2:#c3c2b7; --text-3:#94938b;
+    --accent:#3987e5; --accent-ink:#86b6ef; --accent-soft:rgba(57,135,229,.16);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --neutral:#6b6a65; --bar:#3987e5;
+    --err-bg:#2a1717; --err-border:#5a2b2b; --err-ink:#f19a9a;
+    --info-bg:#16212f; --info-border:#24405f;
+    --warn-soft:rgba(250,178,25,.14); --warn-ink:#f5c454;
+    --tip-bg:#f0efec; --tip-text:#121211;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232322; --hover:rgba(255,255,255,.045);
+  --border:#2c2c2a; --border-strong:#3e3e3b;
+  --text:#f0efec; --text-2:#c3c2b7; --text-3:#94938b;
+  --accent:#3987e5; --accent-ink:#86b6ef; --accent-soft:rgba(57,135,229,.16);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --neutral:#6b6a65; --bar:#3987e5;
+  --err-bg:#2a1717; --err-border:#5a2b2b; --err-ink:#f19a9a;
+  --info-bg:#16212f; --info-border:#24405f;
+  --warn-soft:rgba(250,178,25,.14); --warn-ink:#f5c454;
+  --tip-bg:#f0efec; --tip-text:#121211;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-ink)}
+.wrap{max-width:1320px;margin:0 auto;padding:22px 16px 48px}
+@media(min-width:760px){.wrap{padding:28px 28px 56px}}
+
+/* Header */
+.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font-size:22px;line-height:1.2;margin:0 0 6px;font-weight:650;letter-spacing:-.01em}
+.meta{color:var(--text-2);font-size:13px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--neutral);display:inline-block;margin-right:7px;vertical-align:1px}
+.live-dot.live{background:#0ca30c}
+.live-dot.cache{background:#fab219}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font:inherit;font-weight:550;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.sm{height:30px;padding:0 10px;font-size:13px}
+.btn svg{width:16px;height:16px;flex:0 0 auto}
+.btn[disabled]{cursor:progress;opacity:.8}
+.btn.loading svg.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+:is(button,a,input,select,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ctl{height:36px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--text);padding:0 10px;font:inherit;min-width:0;max-width:100%}
+.auto{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);font-size:13px}
+.auto .ctl{height:36px}
+
+/* Banner */
+.banner{display:none;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:var(--radius);border:1px solid var(--info-border);background:var(--info-bg);margin-bottom:16px}
+.banner.show{display:flex}
+.banner.error{background:var(--err-bg);border-color:var(--err-border)}
+.banner .ic{flex:0 0 auto;width:20px;height:20px;margin-top:1px}
+.banner.error .ic{color:var(--err-ink)}
+.banner b{display:block;margin-bottom:2px}
+.banner p{margin:0;color:var(--text-2);font-size:13.5px}
+.banner .ba{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.kpi{padding:14px 16px;text-align:left;font:inherit;color:inherit;width:100%}
+.kpi .l{font-size:12.5px;color:var(--text-2);font-weight:550}
+.kpi .v{font-size:28px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:4px;line-height:1.1}
+.kpi .s{font-size:12px;color:var(--text-3);margin-top:5px}
+button.kpi{cursor:pointer}
+button.kpi:hover{background:var(--surface-2)}
+.kpi.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+
+/* Filters */
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px;margin-bottom:16px}
+.search{position:relative;flex:1 1 260px;min-width:200px}
+.search input{width:100%;padding-left:34px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-3);pointer-events:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;cursor:pointer}
+.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip .n{color:var(--text-3);font-variant-numeric:tabular-nums}
+#fInst{flex:0 1 320px;min-width:170px}
+#fMonth{flex:0 0 auto}
+.linkbtn{background:none;border:0;color:var(--accent-ink);font:inherit;font-size:13px;cursor:pointer;padding:6px 4px;font-weight:550}
+.linkbtn[hidden]{display:none}
+
+/* Charts */
+.charts{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.c-status{grid-column:span 4}.c-month{grid-column:span 8}.c-inst{grid-column:span 12}
+@media(max-width:980px){.c-status,.c-month,.c-inst{grid-column:span 12}}
+.panel{padding:16px 16px 14px;min-width:0}
+.panel h2{font-size:14.5px;font-weight:620;margin:0}
+.panel .hint{font-size:12px;color:var(--text-3);margin:2px 0 14px}
+.nodata{color:var(--text-3);font-size:13px;padding:24px 0;text-align:center}
+.dim{opacity:.38}
+
+.seg{display:flex;gap:2px;height:14px;margin:4px 0 12px}
+.seg span{min-width:3px;height:100%;cursor:pointer}
+.seg span:first-child{border-radius:4px 0 0 4px}
+.seg span:last-child{border-radius:0 4px 4px 0}
+.seg span:only-child{border-radius:4px}
+.srow{display:grid;grid-template-columns:10px minmax(0,1fr) auto 42px;gap:10px;align-items:center;width:100%;padding:7px 8px;border-radius:8px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.srow:hover{background:var(--hover)}
+.srow.sel{background:var(--accent-soft)}
+.srow .sw{width:10px;height:10px;border-radius:3px}
+.srow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .cnt{font-variant-numeric:tabular-nums;font-weight:620}
+.srow .pct{color:var(--text-3);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+
+.cc-plot{position:relative;height:200px;margin-top:22px}
+.cc-grid div{position:absolute;left:30px;right:0;height:0;border-top:1px solid var(--border)}
+.cc-grid div.base{border-top-color:var(--border-strong)}
+.cc-grid span{position:absolute;right:calc(100% + 7px);top:-8px;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.cc-cols{position:absolute;left:30px;right:0;top:0;bottom:0;display:flex;align-items:flex-end;gap:6px}
+.cc-col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;background:none;border:0;padding:0;cursor:pointer;border-radius:6px 6px 0 0}
+.cc-col:hover{background:var(--hover)}
+.cc-bar{width:100%;max-width:46px;background:var(--bar);border-radius:4px 4px 0 0}
+.cc-val{font-size:11.5px;color:var(--text-2);margin-bottom:4px;font-variant-numeric:tabular-nums;font-weight:600}
+.cc-x{display:flex;gap:6px;margin:7px 0 0 30px}
+.cc-x span{flex:1 1 0;min-width:0;text-align:center;font-size:11px;color:var(--text-3);line-height:1.25;white-space:nowrap;overflow:hidden}
+
+.ilist{max-height:430px;overflow-y:auto;margin:0 -8px}
+.irow{display:grid;grid-template-columns:minmax(0,36%) minmax(0,1fr) 44px;gap:14px;align-items:center;width:100%;padding:6px 8px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.irow:hover{background:var(--hover)}
+.irow.sel{background:var(--accent-soft)}
+.irow .nm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.irow .tr{height:12px;display:flex}
+.irow .b{height:100%;background:var(--bar);border-radius:0 4px 4px 0;min-width:3px}
+.irow .c{text-align:right;font-variant-numeric:tabular-nums;font-weight:620}
+@media(max-width:640px){
+  .irow{grid-template-columns:minmax(0,1fr) 36px;grid-template-areas:"nm c" "tr tr";row-gap:5px}
+  .irow .nm{grid-area:nm;white-space:normal}.irow .tr{grid-area:tr}.irow .c{grid-area:c}
+}
+
+/* Table */
+.thead{display:flex;flex-wrap:wrap;gap:8px 12px;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+.thead h2{font-size:14.5px;margin:0;font-weight:620}
+.thead .cnt{color:var(--text-3);font-weight:500;margin-left:4px}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:1020px}
+th{font-size:12px;font-weight:600;color:var(--text-2);text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;background:var(--surface-2)}
+th button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+th button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+th .ar{opacity:.55;font-size:10px}
+th.num,td.num{text-align:right}
+th.num button{justify-content:flex-end}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;font-size:13.5px}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--hover)}
+tbody tr:last-child td{border-bottom:0}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+td.t-date{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text-2)}
+td.t-title{min-width:300px;max-width:480px;font-weight:520}
+td.t-inst{min-width:190px;max-width:270px;color:var(--text-2)}
+td.t-tf{min-width:140px;max-width:200px;color:var(--text-2)}
+td.t-exp{min-width:130px;max-width:190px}
+.sbadge{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.sbadge i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent-ink);margin-left:6px;vertical-align:1px;white-space:nowrap}
+.tag.chg{background:var(--warn-soft);color:var(--warn-ink)}
+.files{white-space:nowrap}
+.files a{display:inline-flex;font-size:12px;padding:2px 7px;border:1px solid var(--border-strong);border-radius:6px;color:var(--text);text-decoration:none;margin-right:4px}
+.files a:hover{background:var(--surface-2)}
+.muted{color:var(--text-3)}
+.empty{padding:44px 16px;text-align:center;color:var(--text-2)}
+
+/* Drawer */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.backdrop.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(700px,100%);background:var(--surface);border-left:1px solid var(--border);box-shadow:-10px 0 36px rgba(0,0,0,.14);transform:translateX(102%);transition:transform .25s ease;z-index:41;display:flex;flex-direction:column;visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.dhead{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.dhead h2{font-size:17px;margin:8px 0 4px;line-height:1.35;font-weight:640}
+.dhead .di{color:var(--text-2);font-size:13.5px}
+.dbody{padding:16px 20px 36px;overflow-y:auto}
+.dmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 18px;margin-bottom:16px;padding:12px 14px;background:var(--surface-2);border-radius:10px}
+.dmeta span{display:block;font-size:11.5px;color:var(--text-3)}
+.dmeta b{font-weight:550;font-size:13.5px;word-break:break-word}
+.dact{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.dsec{margin-bottom:18px}
+.dsec h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin:0 0 6px;font-weight:650}
+.dsec .tx{white-space:pre-wrap;word-break:break-word;font-size:13.5px;line-height:1.6}
+.iconbtn{width:34px;height:34px;flex:0 0 auto;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto}
+.iconbtn:hover{background:var(--surface-2)}
+.iconbtn svg{width:18px;height:18px}
+
+/* Misc */
+#tip{position:fixed;left:0;top:0;z-index:60;pointer-events:none;background:var(--tip-bg);color:var(--tip-text);font-size:12px;line-height:1.4;padding:6px 9px;border-radius:7px;white-space:pre-line;opacity:0;max-width:300px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,16px);opacity:0;pointer-events:none;transition:all .22s ease;z-index:70;background:var(--tip-bg);color:var(--tip-text);padding:10px 16px;border-radius:10px;font-size:13.5px;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.2)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#drop{position:fixed;inset:12px;border:2px dashed var(--accent);border-radius:16px;background:var(--accent-soft);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:80;font-size:18px;font-weight:600;color:var(--accent-ink);text-align:center;padding:16px}
+#drop.show{display:flex}
+.foot{margin-top:22px;color:var(--text-3);font-size:12.5px}
+.foot summary{cursor:pointer;color:var(--text-2);font-weight:550;width:max-content;max-width:100%}
+.foot .src{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.foot .src input{flex:1 1 360px;min-width:0}
+.foot p{margin:8px 0 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.5v.5"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Cereri de suport extern</h1>
+      <div class="meta" id="meta"><span class="live-dot" id="liveDot"></span><span id="metaText">Se încarcă datele…</span></div>
+    </div>
+    <div class="actions">
+      <label class="auto" title="Reîncarcă automat datele de pe link">Auto
+        <select class="ctl" id="auto" aria-label="Actualizare automată">
+          <option value="0">oprit</option>
+          <option value="1">1 min</option>
+          <option value="5">5 min</option>
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+        </select>
+      </label>
+      <button class="btn" id="btnFile" type="button" title="Încarcă un fișier CSV descărcat de pe link"><svg><use href="#i-upload"/></svg>Încarcă CSV</button>
+      <button class="btn primary" id="btnRestart" type="button" title="Reîncarcă datele actualizate de pe link"><svg class="spin"><use href="#i-refresh"/></svg><span>Restart</span></button>
+      <input type="file" id="fileInput" accept=".csv,text/csv" hidden>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" role="status" aria-live="polite"></div>
+
+  <section class="kpis" id="kpis" aria-label="Indicatori"></section>
+
+  <section class="card filters" aria-label="Filtre">
+    <div class="search">
+      <svg><use href="#i-search"/></svg>
+      <input class="ctl" id="q" type="search" placeholder="Caută în toate câmpurile (titlu, instituție, expert, text)…" aria-label="Căutare">
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Filtru status"></div>
+    <select class="ctl" id="fInst" aria-label="Filtru instituție"></select>
+    <select class="ctl" id="fMonth" aria-label="Filtru lună"></select>
+    <button class="linkbtn" id="btnReset" type="button" hidden>Resetează filtrele</button>
+  </section>
+
+  <section class="charts">
+    <div class="card panel c-status">
+      <h2>Cereri după status</h2>
+      <div class="hint">Click pe un status pentru a filtra</div>
+      <div id="statusBox"></div>
+    </div>
+    <div class="card panel c-month">
+      <h2>Cereri depuse pe lună</h2>
+      <div class="hint">Click pe o lună pentru a filtra</div>
+      <div id="monthBox"></div>
+    </div>
+    <div class="card panel c-inst">
+      <h2>Cereri pe instituții</h2>
+      <div class="hint">Click pe o instituție pentru a filtra</div>
+      <div id="instBox"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Lista cererilor">
+    <div class="thead">
+      <h2>Cereri<span class="cnt" id="tCount"></span></h2>
+      <button class="btn sm" id="btnExport" type="button" title="Descarcă lista filtrată ca CSV"><svg><use href="#i-download"/></svg>Exportă CSV filtrat</button>
+    </div>
+    <div class="tscroll" id="tableBox"></div>
+  </section>
+
+  <footer class="foot">
+    <details>
+      <summary>Sursa datelor</summary>
+      <div class="src">
+        <input class="ctl" id="srcUrl" type="url" aria-label="Link export CSV">
+        <button class="btn sm" id="btnSrcSave" type="button">Salvează și reîncarcă</button>
+        <button class="btn sm" id="btnSrcReset" type="button">Link-ul inițial</button>
+      </div>
+      <p>Link-ul conține un token de acces — nu publica acest fișier și nu-l trimite persoanelor care nu trebuie să vadă datele. Ultimele date încărcate se păstrează în acest browser, ca dashboard-ul să funcționeze și fără internet.</p>
+    </details>
+  </footer>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle"></aside>
+<div id="tip" role="tooltip"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="drop">Eliberează fișierul CSV pentru a-l încărca în dashboard</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- Configurare ---------- */
+const VIA_LOCAL = /^https?:$/.test(location.protocol) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const DEFAULT_URL ='https://oformo.com/api/export?form=jzubl27erlfoza2i&format=csv&system=status%2Cid%2Clink%2Cvisible%2Creviews%2Csource%2Cparent&download=1&token=2fodj4b72ux9auhsrmm0l5x17ipm2w57';
+const LS = { url:'oformoDash.url', csv:'oformoDash.csv', csvTs:'oformoDash.csvTs', snap:'oformoDash.snapshot', auto:'oformoDash.auto' };
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+const MONTHS = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','noi','dec'];
+const MONTHS_LONG = ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
+const STATUS_RO = {'new':'Nou','in progress':'În lucru','completed':'Finalizat','postponed':'Amânat','rejected':'Respins','approved':'Aprobat','cancelled':'Anulat','canceled':'Anulat','on hold':'În așteptare','pending':'În așteptare','closed':'Închis','draft':'Ciornă','archived':'Arhivat'};
+const STATUS_FIXED = {'new':0,'in progress':1,'completed':2,'postponed':3};
+const SLOTS = ['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+
+/* ---------- Stare ---------- */
+let dataUrl = store.get(LS.url) || DEFAULT_URL;
+let H = [], C = {}, R = [];
+let statusInfo = new Map();          // sk -> {label, color, rank}
+let loadedAt = null, loadedFrom = null, fileName = '';
+let prevTs = null, newIds = new Set(), changedIds = new Map();
+let busy = false, autoTimer = null, lastFocus = null, lastFailed = false;
+const st = { q:'', statuses:new Set(), inst:'', month:'', onlyChg:false, sort:{key:'date', dir:-1} };
+
+const $ = s => document.querySelector(s);
+const nf = new Intl.NumberFormat('ro-RO');
+const fmt = n => nf.format(n);
+
+/* ---------- Utilitare ---------- */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function safeUrl(u){ u = (u||'').trim(); return /^https?:\/\/[^\s]+$/i.test(u) ? u : ''; }
+function isEmail(s){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s||'').trim()); }
+function norm(h){ return String(h||'').toLowerCase().replace(/ /g,' ').replace(/[:\s]+/g,' ').trim(); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtDate(d){ return d ? `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}` : '—'; }
+function fmtDT(t){ if(!t) return '—'; const d = new Date(t); return `${fmtDate(d)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function monthLabel(mk, long){ const [y,m] = mk.split('-').map(Number); return (long ? MONTHS_LONG : MONTHS)[m-1] + ' ' + y; }
+function statusLabel(sk){ const i = statusInfo.get(sk); return i ? i.label : sk; }
+function statusColor(sk){ const i = statusInfo.get(sk); return i ? i.color : 'var(--neutral)'; }
+
+function parseCSV(text){
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = []; let row = [], field = '', inQ = false;
+  for (let i = 0, n = text.length; i < n; i++){
+    const c = text[i];
+    if (inQ){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; } else inQ = false;
+      } else field += c;
+      continue;
+    }
+    if (c === '"') inQ = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else if (c !== '\r') field += c;
+  }
+  if (field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
+}
+
+function toCSV(rows){
+  return rows.map(r => r.map(v => { v = v == null ? '' : String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(',')).join('\r\n');
+}
+
+function parseDate(s){
+  s = (s||'').trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/))) return new Date(+m[1], m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0));
+  if ((m = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[ T](\d{1,2}):(\d{2}))?/))) return new Date(+m[3], m[2]-1, +m[1], +(m[4]||0), +(m[5]||0));
+  return null;
+}
+
+function mapCols(nh){
+  const f = p => nh.findIndex(p);
+  return {
+    date: f(h => h === 'date'),
+    datetime: f(h => h === 'date/time'),
+    status: f(h => h === 'status'),
+    id: f(h => h === 'id'),
+    link: f(h => h === 'link'),
+    visible: f(h => h === 'visible'),
+    reviews: f(h => h === 'reviews'),
+    source: f(h => h === 'source'),
+    parent: f(h => h === 'parent'),
+    inst: f(h => h.startsWith('applicant institution') || h === 'institution' || h.startsWith('instituția')),
+    title: f(h => h.startsWith('title of planned') || h === 'title'),
+    timeframe: f(h => h.startsWith('planned timeframe')),
+    days: f(h => h.startsWith('estimated number of days')),
+    expert: f(h => h === 'name/surname'),
+    expertContact: f(h => h.startsWith('phone number/')),
+    cv: f(h => h === 'cv'),
+    tor: f(h => h === 'tor'),
+    contact: f(h => h.startsWith('contact person'))
+  };
+}
+
+const NO_EXPERT = /^(to be (identified|selected|defined|determined|confirmed|recruited)|tbd|tbc|n\/?a|none|nu|-+|\.+|pending)\b/i;
+
+/* ---------- Ingestie date ---------- */
+function ingest(text, source, ts){
+  const rows = parseCSV(text);
+  if (!rows.length) throw new Error('Fișierul primit este gol.');
+  const head = rows[0].map(h => h.trim());
+  const nh = head.map(norm);
+  if (!nh.includes('status') && !nh.includes('id')) {
+    throw new Error('Răspunsul nu este un CSV cu structura așteptată (lipsesc coloanele „Status” / „ID”). Primele caractere: ' + text.slice(0,120));
+  }
+  const cols = mapCols(nh);
+  const g = (a,k) => { const i = cols[k]; return i >= 0 && i < a.length ? (a[i]||'').trim() : ''; };
+  const instNames = new Map();
+  const recs = rows.slice(1).map((a, i) => {
+    while (a.length < head.length) a.push('');
+    const dateStr = g(a,'date') || g(a,'datetime');
+    const d = parseDate(dateStr);
+    const instRaw = g(a,'inst').replace(/\s+/g,' ').replace(/[\s:;.,]+$/,'');
+    const instKey = instRaw.toLowerCase() || '—';
+    if (!instNames.has(instKey)) instNames.set(instKey, instRaw || '— (necompletat)');
+    const daysText = g(a,'days');
+    const dm = daysText.match(/\d+(?:[.,]\d+)?/);
+    let days = dm ? parseFloat(dm[0].replace(',','.')) : null;
+    if (days !== null && (days <= 0 || days > 2000)) days = null;
+    const expert = g(a,'expert');
+    const status = g(a,'status') || '—';
+    return {
+      i, a, id: g(a,'id') || ('rând-' + (i+1)), d, dateStr,
+      mk: d ? `${d.getFullYear()}-${pad(d.getMonth()+1)}` : '',
+      status, sk: status.toLowerCase(), instKey, inst: '',
+      title: g(a,'title') || '(fără titlu)', tf: g(a,'timeframe'),
+      daysText, days, expert, expertOk: !!expert && !NO_EXPERT.test(expert),
+      link: safeUrl(g(a,'link')), cv: safeUrl(g(a,'cv')), tor: safeUrl(g(a,'tor')),
+      reviews: parseInt(g(a,'reviews'),10) || 0,
+      search: a.join(' \u0001 ').toLowerCase()
+    };
+  });
+  recs.forEach(r => r.inst = instNames.get(r.instKey));
+
+  // Statusuri: ordine fixă pentru cele cunoscute, restul după frecvență. Culoarea urmează statusul, nu rangul.
+  const counts = new Map(); const firstLabel = new Map();
+  recs.forEach(r => { counts.set(r.sk, (counts.get(r.sk)||0) + 1); if(!firstLabel.has(r.sk)) firstLabel.set(r.sk, r.status); });
+  const keys = [...counts.keys()].sort((x,y) => {
+    const ix = x in STATUS_FIXED ? STATUS_FIXED[x] : 99, iy = y in STATUS_FIXED ? STATUS_FIXED[y] : 99;
+    return ix - iy || counts.get(y) - counts.get(x) || x.localeCompare(y);
+  });
+  const info = new Map(); let next = 4;
+  keys.forEach((k, rank) => {
+    const color = k in STATUS_FIXED ? `var(${SLOTS[STATUS_FIXED[k]]})` : (next < 8 ? `var(${SLOTS[next++]})` : 'var(--neutral)');
+    info.set(k, { label: STATUS_RO[k] || firstLabel.get(k), raw: firstLabel.get(k), color, rank });
+  });
+
+  // Totul a reușit — aplicăm.
+  H = head; C = cols; R = recs; statusInfo = info;
+  loadedAt = ts ? new Date(ts) : new Date(); loadedFrom = source;
+
+  if (source !== 'cache'){
+    let prev = null; try { prev = JSON.parse(store.get(LS.snap) || 'null'); } catch(e) {}
+    newIds = new Set(); changedIds = new Map();
+    if (prev && prev.s){
+      R.forEach(r => {
+        if (!(r.id in prev.s)) newIds.add(r.id);
+        else if (prev.s[r.id] !== r.status) changedIds.set(r.id, prev.s[r.id]);
+      });
+      prevTs = prev.t;
+    } else prevTs = null;
+    store.set(LS.snap, JSON.stringify({ t: Date.now(), s: Object.fromEntries(R.map(r => [r.id, r.status])) }));
+  }
+
+  // Curățăm filtrele care nu mai au sens
+  [...st.statuses].forEach(s => { if (!statusInfo.has(s)) st.statuses.delete(s); });
+  if (st.inst && !R.some(r => r.instKey === st.inst)) st.inst = '';
+  if (st.month && !R.some(r => r.mk === st.month)) st.month = '';
+  if (st.onlyChg && !(newIds.size + changedIds.size)) st.onlyChg = false;
+
+  renderAll();
+}
+
+/* ---------- Încărcare de pe link ---------- */
+async function refresh(){
+  if (busy) return;
+  busy = true; setBusy(true);
+  try {
+    let res;
+    if (VIA_LOCAL){
+      // Deschis prin „Porneste dashboard.bat”: serverul local descarcă CSV-ul în locul browserului (fără CORS).
+      try { res = await fetch('/data.csv?url=' + encodeURIComponent(dataUrl), { cache:'no-store' }); }
+      catch(e){ const err = new Error('local'); err.local = true; throw err; }
+      if (res.status === 404) res = await fetch(dataUrl, { cache:'no-store', credentials:'omit' });
+    } else {
+      res = await fetch(dataUrl, { cache:'no-store', credentials:'omit' });
+    }
+    if (!res.ok){
+      let t = ''; try { t = (await res.text()).trim(); } catch(e) {}
+      const err = new Error(`Serverul a răspuns cu eroarea ${res.status}${t ? ' — ' + t.slice(0,160) : ''}`);
+      err.http = res.status; throw err;
+    }
+    const text = await res.text();
+    ingest(text, 'live');
+    store.set(LS.csv, text); store.set(LS.csvTs, String(Date.now()));
+    lastFailed = false;
+    hideBanner();
+    let msg = `Date actualizate · ${fmt(R.length)} cereri`;
+    if (prevTs) msg += ` · ${newIds.size} ${newIds.size === 1 ? 'nouă' : 'noi'} · ${changedIds.size} cu status schimbat`;
+    toast(msg);
+  } catch(err) {
+    showError(err);
+  } finally {
+    busy = false; setBusy(false);
+  }
+}
+
+function setBusy(on){
+  const b = $('#btnRestart');
+  b.disabled = on; b.classList.toggle('loading', on);
+  b.querySelector('span').textContent = on ? 'Se încarcă…' : 'Restart';
+  if (on && !R.length) $('#metaText').textContent = 'Se încarcă datele de pe link…';
+  if (!on) renderMeta();
+}
+
+function showError(err){
+  lastFailed = true;
+  const network = err instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(err.message||'');
+  let p;
+  if (err.local) p = 'Serverul local nu răspunde — probabil fereastra „Porneste dashboard” a fost închisă. Pornește din nou <b>Porneste dashboard.bat</b> și apasă Restart.';
+  else if (network && !VIA_LOCAL) p = 'Browserul nu permite unei pagini deschise direct ca fișier să citească datele de pe oformo.com (restricția CORS a site-ului). <b>Soluția:</b> închide această pagină și pornește dashboard-ul cu <b>Porneste dashboard.bat</b> din același folder — atunci Restart aduce datele automat.';
+  else if (network) p = 'Nu am primit răspuns de la oformo.com. Verifică conexiunea la internet.';
+  else if (err.http === 401 || err.http === 403) p = esc(err.message) + '. Token-ul din link poate fi expirat sau revocat — pune link-ul nou în „Sursa datelor” (jos de tot).';
+  else p = esc(err.message);
+  p += R.length ? ` Se afișează ultimele date disponibile (${esc(fmtDT(loadedAt))}).` : '';
+  p += ' Variantă manuală: descarcă CSV-ul de pe link și încarcă-l aici (sau trage fișierul peste pagină).';
+  showBanner('error', 'Nu am putut încărca datele de pe link', p, [
+    `<button class="btn sm primary" type="button" data-act="retry"><svg><use href="#i-refresh"/></svg>Încearcă din nou</button>`,
+    `<a class="btn sm" href="${esc(dataUrl)}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-download"/></svg>Descarcă CSV de pe link</a>`,
+    `<button class="btn sm" type="button" data-act="file"><svg><use href="#i-upload"/></svg>Încarcă fișierul descărcat</button>`
+  ]);
+}
+
+function showBanner(kind, title, html, actions){
+  const b = $('#banner');
+  b.className = 'banner show ' + kind;
+  b.innerHTML = `<svg class="ic"><use href="#i-alert"/></svg><div><b>${esc(title)}</b><p>${html}</p>${actions && actions.length ? `<div class="ba">${actions.join('')}</div>` : ''}</div>`;
+}
+function hideBanner(){ const b = $('#banner'); b.className = 'banner'; b.innerHTML = ''; }
+
+let toastT = null;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+/* ---------- Încărcare fișier ---------- */
+async function loadFile(file){
+  if (!file) return;
+  try {
+    const text = await file.text();
+    fileName = file.name;
+    ingest(text, 'file');
+    lastFailed = false; renderMeta();
+    store.set(LS.csv, text); store.set(LS.csvTs, String(Date.now()));
+    hideBanner();
+    toast(`Fișier încărcat · ${fmt(R.length)} cereri`);
+  } catch(err) {
+    showBanner('error', 'Fișierul nu a putut fi citit', esc(err.message), []);
+  }
+}
+
+/* ---------- Filtrare ---------- */
+function matches(r, except){
+  if (except !== 'status' && st.statuses.size && !st.statuses.has(r.sk)) return false;
+  if (except !== 'inst' && st.inst && r.instKey !== st.inst) return false;
+  if (except !== 'month' && st.month && r.mk !== st.month) return false;
+  if (st.onlyChg && !(newIds.has(r.id) || changedIds.has(r.id))) return false;
+  if (st.q){ const terms = st.q.toLowerCase().split(/\s+/).filter(Boolean); for (const t of terms) if (!r.search.includes(t)) return false; }
+  return true;
+}
+const filtered = except => R.filter(r => matches(r, except));
+const anyFilter = () => !!(st.q || st.statuses.size || st.inst || st.month || st.onlyChg);
+
+/* ---------- Randare ---------- */
+function renderAll(){
+  renderMeta(); renderFilters(); renderKPIs(); renderStatus(); renderMonths(); renderInst(); renderTable();
+}
+
+function renderMeta(){
+  const dot = $('#liveDot');
+  dot.className = 'live-dot' + (loadedFrom === 'live' && !lastFailed ? ' live' : loadedFrom ? ' cache' : '');
+  if (!loadedAt){ $('#metaText').textContent = busy ? 'Se încarcă datele de pe link…' : 'Nu sunt date încărcate'; return; }
+  const src = loadedFrom === 'live' ? 'direct de pe link' : loadedFrom === 'file' ? `din fișierul „${fileName}”` : 'din memoria browserului (ultima încărcare)';
+  $('#metaText').textContent = `Date din ${fmtDT(loadedAt)} · ${src} · ${fmt(R.length)} cereri` + (lastFailed ? ' · ultima actualizare a eșuat' : '');
+}
+
+function renderFilters(){
+  const base = filtered('status');
+  const cnt = new Map(); base.forEach(r => cnt.set(r.sk, (cnt.get(r.sk)||0)+1));
+  $('#chips').innerHTML = [...statusInfo.entries()].map(([k,i]) =>
+    `<button class="chip" type="button" data-status="${esc(k)}" aria-pressed="${st.statuses.has(k)}"><span class="dot" style="background:${i.color}"></span>${esc(i.label)}<span class="n">${fmt(cnt.get(k)||0)}</span></button>`
+  ).join('');
+
+  const ib = filtered('inst'); const ic = new Map(); ib.forEach(r => ic.set(r.instKey, (ic.get(r.instKey)||0)+1));
+  const insts = [...new Map(R.map(r => [r.instKey, r.inst])).entries()].sort((a,b) => a[1].localeCompare(b[1], 'ro'));
+  $('#fInst').innerHTML = `<option value="">Toate instituțiile (${fmt(insts.length)})</option>` +
+    insts.map(([k,n]) => `<option value="${esc(k)}">${esc(n)} (${fmt(ic.get(k)||0)})</option>`).join('');
+  $('#fInst').value = st.inst;
+
+  const months = [...new Set(R.map(r => r.mk).filter(Boolean))].sort().reverse();
+  $('#fMonth').innerHTML = `<option value="">Toate lunile</option>` + months.map(m => `<option value="${m}">${monthLabel(m, true)}</option>`).join('');
+  $('#fMonth').value = st.month;
+
+  $('#btnReset').hidden = !anyFilter();
+}
+
+function renderKPIs(){
+  if (!R.length){
+    $('#kpis').innerHTML = ['Cereri','Instituții solicitante','Experți identificați','Zile-expert estimate','Noi / modificate']
+      .map(l => `<div class="card kpi"><div class="l">${l}</div><div class="v">—</div><div class="s">&nbsp;</div></div>`).join('');
+    return;
+  }
+  const f = filtered();
+  const insts = new Set(f.map(r => r.instKey)).size;
+  const ex = f.filter(r => r.expertOk).length;
+  const wd = f.filter(r => r.days != null); const sumDays = wd.reduce((s,r) => s + r.days, 0);
+  const chg = newIds.size + changedIds.size;
+  const pct = f.length ? Math.round(ex / f.length * 100) : 0;
+  const tiles = [
+    { l:'Cereri', v:fmt(f.length), s: anyFilter() ? `din ${fmt(R.length)} în total` : 'toate cererile din formular' },
+    { l:'Instituții solicitante', v:fmt(insts), s: 'instituții distincte' },
+    { l:'Experți identificați', v:fmt(ex), s:`din ${fmt(f.length)} cereri · ${pct}%` },
+    { l:'Zile-expert estimate', v:fmt(Math.round(sumDays)), s:`din ${fmt(wd.length)} cereri cu număr de zile` },
+  ];
+  let h = tiles.map(t => `<div class="card kpi"><div class="l">${t.l}</div><div class="v">${t.v}</div><div class="s">${esc(t.s)}</div></div>`).join('');
+  if (prevTs){
+    const sub = `${newIds.size} ${newIds.size === 1 ? 'nouă' : 'noi'} · ${changedIds.size} status schimbat — față de ${fmtDT(prevTs)}`;
+    h += chg
+      ? `<button class="card kpi${st.onlyChg ? ' active' : ''}" type="button" data-act="onlychg" aria-pressed="${st.onlyChg}" title="Arată doar cererile noi sau cu status schimbat"><div class="l">Noi / modificate ${st.onlyChg ? '· filtru activ' : '· click pentru filtru'}</div><div class="v">${fmt(chg)}</div><div class="s">${esc(sub)}</div></button>`
+      : `<div class="card kpi"><div class="l">Noi / modificate</div><div class="v">0</div><div class="s">${esc(sub)}</div></div>`;
+  } else {
+    h += `<div class="card kpi"><div class="l">Noi / modificate</div><div class="v">—</div><div class="s">apar după următorul Restart</div></div>`;
+  }
+  $('#kpis').innerHTML = h;
+}
+
+function renderStatus(){
+  const box = $('#statusBox');
+  const f = filtered('status');
+  if (!f.length){ box.innerHTML = `<div class="nodata">${R.length ? 'Nicio cerere pentru filtrele alese' : 'Nu există date încă'}</div>`; return; }
+  const cnt = new Map(); f.forEach(r => cnt.set(r.sk, (cnt.get(r.sk)||0)+1));
+  const keys = [...statusInfo.keys()].filter(k => cnt.get(k) || st.statuses.has(k));
+  const sel = st.statuses.size > 0;
+  const seg = keys.filter(k => cnt.get(k)).map(k => {
+    const n = cnt.get(k), p = Math.round(n / f.length * 100);
+    return `<span data-status="${esc(k)}" class="${sel && !st.statuses.has(k) ? 'dim' : ''}" style="flex:${n} 1 0;background:${statusColor(k)}" data-tip="${esc(statusLabel(k))}\n${fmt(n)} cereri · ${p}%"></span>`;
+  }).join('');
+  const rows = keys.map(k => {
+    const n = cnt.get(k) || 0, p = f.length ? Math.round(n / f.length * 100) : 0, on = st.statuses.has(k);
+    const raw = statusInfo.get(k).raw;
+    return `<button class="srow${on ? ' sel' : ''}${sel && !on ? ' dim' : ''}" type="button" data-status="${esc(k)}" aria-pressed="${on}" title="${esc(raw)}"><span class="sw" style="background:${statusColor(k)}"></span><span class="nm">${esc(statusLabel(k))}</span><span class="cnt">${fmt(n)}</span><span class="pct">${p}%</span></button>`;
+  }).join('');
+  box.innerHTML = `<div class="seg" role="img" aria-label="Distribuția cererilor pe statusuri">${seg}</div>${rows}`;
+}
+
+function niceMax(v){
+  if (v <= 2) return 2;
+  if (v <= 10) return Math.ceil(v/2)*2;
+  const e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e;
+}
+
+function renderMonths(){
+  const box = $('#monthBox');
+  const f = filtered('month').filter(r => r.mk);
+  if (!f.length){ box.innerHTML = `<div class="nodata">${R.length ? 'Nicio cerere pentru filtrele alese' : 'Nu există date încă'}</div>`; return; }
+  const cnt = new Map(); f.forEach(r => cnt.set(r.mk, (cnt.get(r.mk)||0)+1));
+  const ks = [...cnt.keys()].sort();
+  if (st.month){ if (st.month < ks[0]) ks.unshift(st.month); if (st.month > ks[ks.length-1]) ks.push(st.month); }
+  let [y, m] = ks[0].split('-').map(Number); const [ly, lm] = ks[ks.length-1].split('-').map(Number);
+  const months = [];
+  while (y < ly || (y === ly && m <= lm)){ months.push(`${y}-${pad(m)}`); m++; if (m > 12){ m = 1; y++; } }
+  const vals = months.map(k => cnt.get(k) || 0);
+  const max = Math.max(...vals), top = niceMax(max);
+  const maxIdx = vals.indexOf(max), lastIdx = vals.length - 1;
+  const stride = Math.ceil(months.length / 12);
+  const sel = !!st.month;
+  const grid = [top, top/2, 0].map((v,i) => `<div class="${i === 2 ? 'base' : ''}" style="bottom:${v/top*100}%"><span>${fmt(v)}</span></div>`).join('');
+  const cols = months.map((k,i) => {
+    const v = vals[i], on = st.month === k;
+    const showVal = v > 0 && (i === maxIdx || i === lastIdx || on);
+    return `<button class="cc-col${sel && !on ? ' dim' : ''}" type="button" data-month="${k}" aria-pressed="${on}" aria-label="${monthLabel(k,true)}: ${v} cereri" data-tip="${monthLabel(k,true)}\n${fmt(v)} ${v === 1 ? 'cerere' : 'cereri'}">${showVal ? `<span class="cc-val">${fmt(v)}</span>` : ''}<span class="cc-bar" style="height:${v ? Math.max(v/top*100, 1.2) : 0}%"></span></button>`;
+  }).join('');
+  const xl = months.map((k,i) => {
+    const [yy, mm] = k.split('-').map(Number);
+    const show = i % stride === 0 || i === lastIdx;
+    const yr = (i === 0 || mm === 1) ? `<br>${yy}` : '<br>&nbsp;';
+    return `<span>${show ? MONTHS[mm-1] + yr : '&nbsp;<br>&nbsp;'}</span>`;
+  }).join('');
+  box.innerHTML = `<div class="cc-plot"><div class="cc-grid">${grid}</div><div class="cc-cols">${cols}</div></div><div class="cc-x" aria-hidden="true">${xl}</div>`;
+}
+
+function renderInst(){
+  const box = $('#instBox');
+  const f = filtered('inst');
+  if (!f.length){ box.innerHTML = `<div class="nodata">${R.length ? 'Nicio cerere pentru filtrele alese' : 'Nu există date încă'}</div>`; return; }
+  const cnt = new Map(); f.forEach(r => cnt.set(r.instKey, (cnt.get(r.instKey)||0)+1));
+  if (st.inst && !cnt.has(st.inst)) cnt.set(st.inst, 0);
+  const names = new Map(R.map(r => [r.instKey, r.inst]));
+  const list = [...cnt.entries()].sort((a,b) => b[1] - a[1] || names.get(a[0]).localeCompare(names.get(b[0]), 'ro'));
+  const max = Math.max(...list.map(x => x[1]), 1);
+  const sel = !!st.inst;
+  box.innerHTML = `<div class="ilist">` + list.map(([k,n]) => {
+    const on = st.inst === k, nm = names.get(k);
+    return `<button class="irow${on ? ' sel' : ''}${sel && !on ? ' dim' : ''}" type="button" data-inst="${esc(k)}" aria-pressed="${on}" data-tip="${esc(nm)}\n${fmt(n)} ${n === 1 ? 'cerere' : 'cereri'}"><span class="nm">${esc(nm)}</span><span class="tr"><span class="b" style="width:${n ? n/max*100 : 0}%"></span></span><span class="c">${fmt(n)}</span></button>`;
+  }).join('') + `</div>`;
+}
+
+const TCOLS = [
+  { key:'date',     label:'Data',              sort: r => r.d ? r.d.getTime() : 0 },
+  { key:'title',    label:'Titlul suportului', sort: r => r.title.toLowerCase() },
+  { key:'inst',     label:'Instituția',        sort: r => r.inst.toLowerCase() },
+  { key:'status',   label:'Status',            sort: r => (statusInfo.get(r.sk)||{rank:99}).rank },
+  { key:'tf',       label:'Perioada',          sort: r => r.tf.toLowerCase() },
+  { key:'days',     label:'Zile',              sort: r => r.days == null ? -1 : r.days, num:true },
+  { key:'expert',   label:'Expert',            sort: r => r.expertOk ? r.expert.toLowerCase() : '￿' },
+  { key:'files',    label:'Fișiere',           sort: r => (r.tor ? 2 : 0) + (r.cv ? 1 : 0) },
+  { key:'reviews',  label:'Recenzii',          sort: r => r.reviews, num:true }
+];
+
+function renderTable(){
+  const box = $('#tableBox');
+  if (!R.length){
+    $('#tCount').textContent = '';
+    box.innerHTML = `<div class="empty">${busy ? 'Se încarcă datele…' : 'Nu sunt date încă. Apasă <b>Restart</b> sau încarcă fișierul CSV descărcat de pe link.'}</div>`;
+    return;
+  }
+  const col = TCOLS.find(c => c.key === st.sort.key) || TCOLS[0];
+  const dir = st.sort.dir;
+  const f = filtered().slice().sort((a,b) => {
+    const x = col.sort(a), y = col.sort(b);
+    const c = x < y ? -1 : x > y ? 1 : 0;
+    return c * dir || ((b.d ? b.d.getTime() : 0) - (a.d ? a.d.getTime() : 0));
+  });
+  $('#tCount').textContent = `· ${fmt(f.length)}${f.length !== R.length ? ' din ' + fmt(R.length) : ''}`;
+  if (!f.length){
+    box.innerHTML = `<div class="empty">Nicio cerere nu corespunde filtrelor. <button class="linkbtn" type="button" data-act="reset">Resetează filtrele</button></div>`;
+    return;
+  }
+  const th = TCOLS.map(c => {
+    const on = st.sort.key === c.key;
+    const ar = on ? (st.sort.dir === 1 ? '▲' : '▼') : '↕';
+    return `<th class="${c.num ? 'num' : ''}" aria-sort="${on ? (st.sort.dir === 1 ? 'ascending' : 'descending') : 'none'}"><button type="button" data-sort="${c.key}">${c.label}<span class="ar">${ar}</span></button></th>`;
+  }).join('');
+  const tr = f.map(r => {
+    const isNew = newIds.has(r.id), chg = changedIds.get(r.id);
+    const tags = (isNew ? `<span class="tag">NOU</span>` : '') + (chg != null ? `<span class="tag chg" title="Status anterior: ${esc(chg)}">STATUS SCHIMBAT</span>` : '');
+    const files = (r.tor ? `<a href="${esc(r.tor)}" target="_blank" rel="noopener noreferrer" data-stop>ToR</a>` : '') + (r.cv ? `<a href="${esc(r.cv)}" target="_blank" rel="noopener noreferrer" data-stop>CV</a>` : '');
+    return `<tr data-i="${r.i}" tabindex="0">
+      <td class="t-date" title="${esc(r.dateStr)}">${fmtDate(r.d)}</td>
+      <td class="t-title"><span class="clamp">${esc(r.title)}${tags}</span></td>
+      <td class="t-inst"><span class="clamp">${esc(r.inst)}</span></td>
+      <td><span class="sbadge"><i style="background:${statusColor(r.sk)}"></i>${esc(statusLabel(r.sk))}</span></td>
+      <td class="t-tf"><span class="clamp">${esc(r.tf) || '<span class="muted">—</span>'}</span></td>
+      <td class="num" title="${esc(r.daysText)}">${r.days != null ? fmt(r.days) : '<span class="muted">—</span>'}</td>
+      <td class="t-exp"><span class="clamp">${r.expertOk ? esc(r.expert) : `<span class="muted">${esc(r.expert) || '—'}</span>`}</span></td>
+      <td class="files">${files || '<span class="muted">—</span>'}</td>
+      <td class="num">${fmt(r.reviews)}</td>
+    </tr>`;
+  }).join('');
+  box.innerHTML = `<table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
+}
+
+/* ---------- Detalii cerere ---------- */
+function valueHtml(v){
+  const u = safeUrl(v);
+  if (u) return `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(decodeURIComponent(u.split('/').pop() || u))}</a>`;
+  if (isEmail(v)) return `<a href="mailto:${esc(v.trim())}">${esc(v)}</a>`;
+  return esc(v);
+}
+
+function openDrawer(i){
+  const r = R[i]; if (!r) return;
+  lastFocus = document.activeElement;
+  const used = new Set(['date','status','id','link','visible','reviews','source','parent','inst','title','timeframe','days','cv','tor'].map(k => C[k]).filter(x => x >= 0));
+  if (C.datetime >= 0 && (r.a[C.datetime]||'').trim() === r.dateStr) used.add(C.datetime);
+  const get = k => C[k] >= 0 ? (r.a[C[k]]||'').trim() : '';
+  const meta = [
+    ['Data depunerii', r.d ? fmtDT(r.d) : (r.dateStr || '—')],
+    ['Perioada planificată', r.tf || '—'],
+    ['Zile estimate', r.daysText || '—'],
+    ['Recenzii', String(r.reviews)],
+    ['Sursa', get('source') || '—'],
+    ['Vizibil', get('visible') || '—'],
+    ['ID', r.id]
+  ];
+  if (get('parent')) meta.push(['Părinte', get('parent')]);
+  const chg = changedIds.get(r.id);
+  const tags = (newIds.has(r.id) ? `<span class="tag">NOU</span>` : '') + (chg != null ? `<span class="tag chg">STATUS SCHIMBAT · era „${esc(chg)}”</span>` : '');
+  const actions = [
+    r.link ? `<a class="btn sm primary" href="${esc(r.link)}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-ext"/></svg>Deschide în oformo</a>` : '',
+    r.tor ? `<a class="btn sm" href="${esc(r.tor)}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-download"/></svg>ToR</a>` : '',
+    r.cv ? `<a class="btn sm" href="${esc(r.cv)}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-download"/></svg>CV expert</a>` : ''
+  ].join('');
+  const secs = H.map((h, j) => {
+    if (used.has(j)) return '';
+    const v = (r.a[j]||'').trim(); if (!v) return '';
+    return `<div class="dsec"><h3>${esc(h.replace(/[:\s]+$/,''))}</h3><div class="tx">${valueHtml(v)}</div></div>`;
+  }).join('');
+  $('#drawer').innerHTML = `
+    <div class="dhead">
+      <div style="min-width:0">
+        <span class="sbadge"><i style="background:${statusColor(r.sk)}"></i>${esc(statusLabel(r.sk))}</span>${tags}
+        <h2 id="dTitle">${esc(r.title)}</h2>
+        <div class="di">${esc(r.inst)}</div>
+      </div>
+      <button class="iconbtn" type="button" data-act="close" aria-label="Închide"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dbody">
+      <div class="dmeta">${meta.map(([l,v]) => `<div><span>${esc(l)}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      ${actions ? `<div class="dact">${actions}</div>` : ''}
+      ${secs || '<p class="muted">Nu există alte câmpuri completate.</p>'}
+    </div>`;
+  $('#drawer').classList.add('open'); $('#backdrop').classList.add('open');
+  $('#drawer').querySelector('.dbody').scrollTop = 0;
+  $('#drawer').querySelector('[data-act="close"]').focus();
+}
+function closeDrawer(){
+  if (!$('#drawer').classList.contains('open')) return;
+  $('#drawer').classList.remove('open'); $('#backdrop').classList.remove('open');
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+
+/* ---------- Export ---------- */
+function exportCSV(){
+  if (!R.length) return;
+  const f = filtered();
+  const blob = new Blob(['﻿' + toCSV([H, ...f.map(r => r.a)])], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = URL.createObjectURL(blob);
+  a.download = `cereri_${anyFilter() ? 'filtrate_' : ''}${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------- Auto-refresh ---------- */
+function setupAuto(){
+  clearInterval(autoTimer); autoTimer = null;
+  const m = +$('#auto').value;
+  store.set(LS.auto, String(m));
+  if (m > 0) autoTimer = setInterval(refresh, m * 60000);
+}
+
+/* ---------- Evenimente ---------- */
+function resetFilters(){
+  st.q = ''; $('#q').value = ''; st.statuses.clear(); st.inst = ''; st.month = ''; st.onlyChg = false;
+  renderAll();
+}
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('[data-stop]')) return;
+  const act = t.closest('[data-act]');
+  if (act){
+    const a = act.dataset.act;
+    if (a === 'retry') refresh();
+    else if (a === 'file') $('#fileInput').click();
+    else if (a === 'close') closeDrawer();
+    else if (a === 'reset') resetFilters();
+    else if (a === 'onlychg'){ st.onlyChg = !st.onlyChg; renderAll(); }
+    return;
+  }
+  const s = t.closest('[data-status]');
+  if (s){ const k = s.dataset.status; st.statuses.has(k) ? st.statuses.delete(k) : st.statuses.add(k); renderAll(); return; }
+  const mo = t.closest('[data-month]');
+  if (mo){ st.month = st.month === mo.dataset.month ? '' : mo.dataset.month; renderAll(); return; }
+  const ins = t.closest('[data-inst]');
+  if (ins){ st.inst = st.inst === ins.dataset.inst ? '' : ins.dataset.inst; renderAll(); return; }
+  const so = t.closest('[data-sort]');
+  if (so){
+    const k = so.dataset.sort;
+    if (st.sort.key === k) st.sort.dir *= -1; else st.sort = { key:k, dir: (k === 'date' || k === 'days' || k === 'reviews') ? -1 : 1 };
+    renderTable(); return;
+  }
+  const row = t.closest('tbody tr[data-i]');
+  if (row){ openDrawer(+row.dataset.i); return; }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDrawer();
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('tbody tr[data-i]')) openDrawer(+e.target.dataset.i);
+});
+$('#backdrop').addEventListener('click', closeDrawer);
+$('#btnRestart').addEventListener('click', refresh);
+$('#btnFile').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+$('#btnExport').addEventListener('click', exportCSV);
+$('#btnReset').addEventListener('click', resetFilters);
+$('#fInst').addEventListener('change', e => { st.inst = e.target.value; renderAll(); });
+$('#fMonth').addEventListener('change', e => { st.month = e.target.value; renderAll(); });
+let qT = null;
+$('#q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { st.q = e.target.value.trim(); renderAll(); }, 160); });
+$('#auto').addEventListener('change', setupAuto);
+
+$('#srcUrl').value = dataUrl;
+$('#btnSrcSave').addEventListener('click', () => {
+  const v = $('#srcUrl').value.trim();
+  if (!/^https:\/\//i.test(v)){ toast('Introdu un link valid care începe cu https://'); return; }
+  dataUrl = v; store.set(LS.url, v); refresh();
+});
+$('#btnSrcReset').addEventListener('click', () => { dataUrl = DEFAULT_URL; store.del(LS.url); $('#srcUrl').value = dataUrl; refresh(); });
+
+// Tooltip
+const tip = $('#tip');
+function placeTip(e){
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 14, y = e.clientY + 16;
+  if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+  if (y + h > innerHeight - 8) y = e.clientY - h - 12;
+  tip.style.transform = `translate(${Math.max(8,x)}px,${Math.max(8,y)}px)`;
+}
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest && e.target.closest('[data-tip]');
+  if (!el){ tip.style.opacity = 0; return; }
+  tip.textContent = el.dataset.tip; tip.style.opacity = 1; placeTip(e);
+});
+document.addEventListener('mousemove', e => { if (tip.style.opacity === '1') placeTip(e); });
+addEventListener('scroll', () => { tip.style.opacity = 0; }, { passive:true });
+
+// Drag & drop
+let dragDepth = 0;
+const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; $('#drop').classList.add('show'); });
+addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth-1); if (!dragDepth) $('#drop').classList.remove('show'); });
+addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth = 0; $('#drop').classList.remove('show'); loadFile(e.dataTransfer.files[0]); });
+
+/* ---------- Pornire ---------- */
+const savedAuto = store.get(LS.auto);
+if (savedAuto && [...$('#auto').options].some(o => o.value === savedAuto)) $('#auto').value = savedAuto;
+setupAuto();
+const cached = store.get(LS.csv);
+if (cached){ try { ingest(cached, 'cache', +store.get(LS.csvTs) || null); } catch(e){ store.del(LS.csv); } }
+renderAll();
+refresh();
+})();
+</script>
+</body>
+</html>
